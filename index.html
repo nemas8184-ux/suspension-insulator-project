@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapping Voltage Gradient Across a String of Suspension Insulators</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Three.js & OrbitControls (UMD builds for reliable local and server execution) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Chart.js UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Top Academic Navigation Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand-block">
+        <div class="brand-badge">B.Tech Electrical Engineering Mini Project</div>
+        <h1>Mapping Voltage Gradient Across a String of Suspension Insulators</h1>
+        <p class="brand-subtitle">
+          Interactive Lumped-Capacitance Nodal Analysis, 3D Stress Visualization &amp; String Efficiency Study
+        </p>
+      </div>
+      <nav class="top-nav" aria-label="Primary Navigation">
+        <a href="#lab-section" class="nav-link active">Simulation Lab</a>
+        <a href="#table-section" class="nav-link">Results Table</a>
+        <a href="#theory-section" class="nav-link">Academic Report</a>
+        <a href="#tests-section" class="nav-link">Verification</a>
+      </nav>
+    </div>
+    <div class="disclaimer-bar" role="note">
+      <strong>Educational Simulation Notice:</strong>
+      All voltages and efficiencies shown are computed mathematically from an ideal lumped-capacitance AC steady-state circuit model. This is an educational software simulation, not a physical high-voltage laboratory experiment.
+    </div>
+  </header>
+
+  <main class="page-container">
+    <!-- SECTION 1: INTERACTIVE SIMULATION DASHBOARD -->
+    <section id="lab-section" class="dashboard-section" aria-label="Interactive Simulation Workspace">
+      <div class="dashboard-grid">
+        <!-- LEFT SIDEBAR: CONTROLS -->
+        <aside class="panel controls-panel" aria-label="Simulation Parameters">
+          <div class="panel-header">
+            <h2>Simulation Controls</h2>
+            <span class="tag tag-blue">Nodal Solver</span>
+          </div>
+
+          <!-- Number of Discs -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <label for="disc-count-range">Number of Insulator Discs (<em>n</em>)</label>
+              <input
+                type="number"
+                id="disc-count-input"
+                class="num-input"
+                min="1"
+                max="15"
+                step="1"
+                value="5"
+                aria-label="Number of insulator discs"
+              />
+            </div>
+            <input
+              type="range"
+              id="disc-count-range"
+              min="1"
+              max="15"
+              step="1"
+              value="5"
+            />
+            <div class="range-hints">
+              <span>1 (Single)</span>
+              <span>5 (132 kV typ.)</span>
+              <span>15 (EHV)</span>
+            </div>
+          </div>
+
+          <!-- Applied Voltage -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <label for="voltage-range">Applied String Voltage <em>V</em> (kV RMS)</label>
+              <input
+                type="number"
+                id="voltage-input"
+                class="num-input"
+                min="11"
+                max="440"
+                step="0.1"
+                value="76.2"
+                aria-label="Applied string voltage in kV"
+              />
+            </div>
+            <input
+              type="range"
+              id="voltage-range"
+              min="11"
+              max="440"
+              step="0.1"
+              value="76.2"
+            />
+            <div class="preset-row" aria-label="Standard transmission phase voltage presets">
+              <button type="button" class="preset-btn" data-voltage="19.1" data-discs="3" title="33 kV Line-to-Line (33/√3 ≈ 19.1 kV)">33 kV Sys</button>
+              <button type="button" class="preset-btn" data-voltage="38.1" data-discs="4" title="66 kV Line-to-Line (66/√3 ≈ 38.1 kV)">66 kV Sys</button>
+              <button type="button" class="preset-btn active" data-voltage="76.2" data-discs="5" title="132 kV Line-to-Line (132/√3 ≈ 76.2 kV)">132 kV Sys</button>
+              <button type="button" class="preset-btn" data-voltage="127.0" data-discs="9" title="220 kV Line-to-Line (220/√3 ≈ 127.0 kV)">220 kV Sys</button>
+              <button type="button" class="preset-btn" data-voltage="230.9" data-discs="14" title="400 kV Line-to-Line (400/√3 ≈ 230.9 kV)">400 kV Sys</button>
+            </div>
+            <small class="help-text">
+              Note: A suspension string experiences phase-to-ground voltage (<em>V</em><sub>ph</sub> = <em>V</em><sub>L</sub> / &radic;3).
+            </small>
+          </div>
+
+          <!-- Shunt-to-Self Capacitance Ratio -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <label for="ratio-range">Capacitance Ratio <em>K</em> = <em>C</em><sub>1</sub> / <em>C</em></label>
+              <input
+                type="number"
+                id="ratio-input"
+                class="num-input"
+                min="0"
+                max="0.5"
+                step="0.01"
+                value="0.12"
+                aria-label="Shunt to self capacitance ratio K"
+              />
+            </div>
+            <input
+              type="range"
+              id="ratio-range"
+              min="0"
+              max="0.5"
+              step="0.01"
+              value="0.12"
+            />
+            <div class="preset-row">
+              <button type="button" class="ratio-preset-btn" data-ratio="0.00">0.00 (Ideal)</button>
+              <button type="button" class="ratio-preset-btn" data-ratio="0.10">0.10 (Low)</button>
+              <button type="button" class="ratio-preset-btn active" data-ratio="0.12">0.12 (Typical)</button>
+              <button type="button" class="ratio-preset-btn" data-ratio="0.25">0.25 (High)</button>
+            </div>
+            <small class="help-text">
+              <em>C</em><sub>1</sub> is stray capacitance from pin to tower; <em>C</em> is disc self-capacitance.
+            </small>
+          </div>
+
+          <!-- 3D Visual Settings -->
+          <div class="control-group visual-options">
+            <div class="option-row">
+              <label for="material-select">Insulator Material</label>
+              <select id="material-select">
+                <option value="ceramic" selected>Ceramic (Porcelain)</option>
+                <option value="glass">Toughened Glass</option>
+              </select>
+            </div>
+            <label class="checkbox-row">
+              <input type="checkbox" id="heatmap-toggle" checked />
+              <span>Color-code discs by voltage stress</span>
+            </label>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button type="button" id="calculate-btn" class="btn btn-primary">Calculate</button>
+            <button type="button" id="reset-btn" class="btn btn-secondary">Reset</button>
+            <button type="button" id="compare-btn" class="btn btn-outline" aria-pressed="false">Compare</button>
+          </div>
+
+          <!-- Compare Baseline Controls (shown when Compare Mode is active) -->
+          <div id="compare-controls" class="compare-box hidden">
+            <div class="compare-box-header">
+              <strong>Comparison Mode Active</strong>
+              <span class="tag tag-teal">Overlay ON</span>
+            </div>
+            <p class="compare-desc">
+              Comparing active non-uniform distribution against the ideal <strong>Uniform (<em>K</em> = 0)</strong> baseline. You can also pin a second scenario:
+            </p>
+            <div class="compare-actions">
+              <button type="button" id="pin-baseline-btn" class="btn btn-sm btn-secondary">Pin Current Case</button>
+              <button type="button" id="clear-baseline-btn" class="btn btn-sm btn-ghost hidden">Clear Pin</button>
+            </div>
+            <div id="pinned-label" class="pinned-status"></div>
+          </div>
+        </aside>
+
+        <!-- CENTER PANEL: 3D INSULATOR VIEWPORT -->
+        <section class="panel viewport-panel" aria-label="3D Suspension Insulator Visualization">
+          <div class="panel-header">
+            <div>
+              <h2>3D Insulator String Model</h2>
+              <p class="panel-sub">Drag to rotate &bull; Scroll to zoom &bull; Right-drag to pan &bull; Click or hover a disc to inspect</p>
+            </div>
+            <div class="viewport-actions">
+              <button type="button" id="reset-camera-btn" class="btn btn-sm btn-ghost">Reset View</button>
+            </div>
+          </div>
+
+          <div class="three-wrapper">
+            <div id="three-container" class="three-canvas-host" role="img" aria-label="Interactive 3D model of a vertical suspension insulator string"></div>
+            <div id="webgl-fallback" class="webgl-fallback hidden">
+              <p>3D WebGL renderer could not initialize in this environment. Electrical calculations and charts remain fully functional.</p>
+            </div>
+
+            <!-- Floating End Labels -->
+            <div class="scene-badge badge-top">
+              <span class="dot dot-ground"></span> Tower Cross-Arm (Node 0: 0.00 kV)
+            </div>
+            <div class="scene-badge badge-bottom" id="conductor-badge">
+              <span class="dot dot-hv"></span> HV Line Conductor (Node 5: 76.20 kV)
+            </div>
+
+            <!-- Disc Inspector Overlay -->
+            <div id="disc-inspector" class="disc-inspector">
+              <div class="inspector-title" id="inspector-title">Hover or click any disc</div>
+              <div class="inspector-body" id="inspector-body">
+                Inspect individual disc potential, voltage drop, and stress percentage directly on the 3D string.
+              </div>
+            </div>
+          </div>
+
+          <!-- Color Scale Legend -->
+          <div class="heatmap-legend" aria-label="Voltage Stress Color Legend">
+            <span class="legend-label">Low Stress (Tower End)</span>
+            <div class="legend-gradient"></div>
+            <span class="legend-label">High Stress (Conductor End)</span>
+          </div>
+        </section>
+
+        <!-- RIGHT PANEL: KPIS & CHARTS -->
+        <section class="panel analytics-panel" aria-label="Voltage Distribution Analytics">
+          <div class="panel-header">
+            <h2>Electrical Analysis &amp; Graphs</h2>
+            <span id="calc-status-pill" class="tag tag-green">Balanced (&Sigma;v&#x1D62; = V)</span>
+          </div>
+
+          <!-- KPI Summary Grid -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <span class="kpi-label">String Efficiency (&eta;)</span>
+              <strong class="kpi-value" id="kpi-efficiency">--</strong>
+              <span class="kpi-meta" id="kpi-efficiency-note">Ideal = 100%</span>
+            </div>
+            <div class="kpi-card kpi-alert">
+              <span class="kpi-label">Max Disc Voltage (<em>v</em><sub>n</sub>)</span>
+              <strong class="kpi-value" id="kpi-vmax">--</strong>
+              <span class="kpi-meta" id="kpi-vmax-pct">--</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Min Disc Voltage (<em>v</em><sub>1</sub>)</span>
+              <strong class="kpi-value" id="kpi-vmin">--</strong>
+              <span class="kpi-meta" id="kpi-vmin-pct">--</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Voltage Sum Check</span>
+              <strong class="kpi-value" id="kpi-sum">--</strong>
+              <span class="kpi-meta" id="kpi-ratio-stress">Stress Ratio: --</span>
+            </div>
+          </div>
+
+          <!-- Compare Summary Strip -->
+          <div id="compare-summary" class="compare-summary hidden" aria-live="polite"></div>
+
+          <!-- Chart Tabs & Unit Toggle -->
+          <div class="chart-toolbar">
+            <div class="chart-tabs" role="tablist">
+              <button type="button" class="tab-btn active" data-chart-tab="distribution" role="tab" aria-selected="true">Disc Voltages</button>
+              <button type="button" class="tab-btn" data-chart-tab="potential" role="tab" aria-selected="false">Node Potentials</button>
+              <button type="button" class="tab-btn" data-chart-tab="sweep" role="tab" aria-selected="false">&eta; vs Ratio <em>K</em></button>
+            </div>
+            <div class="unit-toggle" id="unit-toggle-group">
+              <button type="button" class="unit-btn active" data-unit="kv">kV</button>
+              <button type="button" class="unit-btn" data-unit="pct">%</button>
+            </div>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="voltage-chart" aria-label="Voltage distribution graph"></canvas>
+          </div>
+
+          <p class="chart-caption" id="chart-caption">
+            Bar chart shows voltage across each disc from tower end (Disc 1) to conductor end (Disc <em>n</em>), compared against the ideal uniform distribution (<em>V/n</em>).
+          </p>
+        </section>
+      </div>
+    </section>
+
+    <!-- SECTION 2: NUMERICAL RESULTS TABLE -->
+    <section id="table-section" class="panel table-section" aria-label="Numerical Results Table">
+      <div class="panel-header">
+        <div>
+          <h2>Disc-by-Disc Numerical Results</h2>
+          <p class="panel-sub">Computed using KCL nodal analysis on the lumped-capacitance ladder network</p>
+        </div>
+        <button type="button" id="export-csv-btn" class="btn btn-sm btn-secondary">Export CSV</button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Disc #</th>
+              <th>Position in String</th>
+              <th>Upper Node <em>V</em><sub>i&minus;1</sub> (kV)</th>
+              <th>Lower Node <em>V</em><sub>i</sub> (kV)</th>
+              <th>Disc Voltage <em>v</em><sub>i</sub> (kV)</th>
+              <th>Voltage Share (%)</th>
+              <th>Uniform Ref <em>V/n</em> (kV)</th>
+              <th>Deviation vs Uniform</th>
+              <th>Stress Level</th>
+            </tr>
+          </thead>
+          <tbody id="results-table-body">
+            <!-- Populated dynamically by script.js -->
+          </tbody>
+          <tfoot id="results-table-foot">
+            <!-- Populated dynamically by script.js -->
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 3: EDUCATIONAL REPORT & DOCUMENTATION -->
+    <section id="theory-section" class="theory-section" aria-label="Educational Documentation">
+      <div class="section-heading">
+        <h2>Engineering Theory &amp; Project Documentation</h2>
+        <p>Academic reference covering physical principles, mathematical formulation, and analytical discussion</p>
+      </div>
+
+      <div class="theory-grid">
+        <!-- 1. Introduction -->
+        <article class="panel theory-card">
+          <h3>1. Introduction</h3>
+          <p>
+            Overhead high-voltage (HV) and extra-high-voltage (EHV) transmission lines rely on <strong>suspension insulator strings</strong> to mechanically support phase conductors from grounded steel towers while providing electrical isolation. A suspension string consists of multiple porcelain or toughened glass insulator discs connected in series using galvanized steel cap-and-pin hardware.
+          </p>
+          <p>
+            In an ideal world, an applied phase-to-ground voltage <em>V</em> across <em>n</em> identical discs would divide equally so each disc supports <em>V/n</em>. In practice, stray electrostatic capacitance between each intermediate metal pin and the grounded tower causes <strong>non-uniform voltage distribution</strong>, placing the highest electrical stress on the disc closest to the live conductor.
+          </p>
+        </article>
+
+        <!-- 2. Project Objectives -->
+        <article class="panel theory-card">
+          <h3>2. Project Objectives</h3>
+          <ul class="academic-list">
+            <li>Model an <em>n</em>-disc suspension insulator string using a physically consistent lumped-capacitance ladder network.</li>
+            <li>Solve junction node potentials (<em>V</em><sub>1</sub> &hellip; <em>V</em><sub><em>n</em>&minus;1</sub>) via Kirchhoff&rsquo;s Current Law (KCL) nodal analysis while strictly enforcing voltage conservation (&Sigma;<em>v</em><sub>i</sub> = <em>V</em>).</li>
+            <li>Visualize the voltage gradient interactively on a realistic 3D suspension string using Three.js and dynamically plot distributions with Chart.js.</li>
+            <li>Quantify the impact of disc count (<em>n</em>), applied voltage (<em>V</em>), and shunt-to-self capacitance ratio (<em>K</em> = <em>C</em><sub>1</sub>/<em>C</em>) on string efficiency (&eta;).</li>
+          </ul>
+        </article>
+
+        <!-- 3. Working Principle -->
+        <article class="panel theory-card">
+          <h3>3. Working Principle</h3>
+          <p>
+            Under alternating current (AC), each insulator disc behaves primarily as a dielectric capacitor of self-capacitance <em>C</em> between its metal cap and pin. Simultaneously, each intermediate metal fitting has a small air-dielectric stray (shunt) capacitance <em>C</em><sub>1</sub> to the nearby grounded tower structure.
+          </p>
+          <p>
+            Because shunt capacitive currents leak from each intermediate junction toward the tower, the charging current flowing through the discs increases progressively from the tower end (Disc 1) toward the conductor end (Disc <em>n</em>). Since all discs share equal self-capacitance <em>C</em> (and hence equal capacitive reactance <em>X</em><sub>C</sub> = 1/&omega;<em>C</em>), higher current in the lower discs produces a larger voltage drop (<em>v</em><sub>i</sub> = <em>I</em><sub>i</sub> &middot; <em>X</em><sub>C</sub>), creating a steep voltage gradient near the live line.
+          </p>
+        </article>
+
+        <!-- 4. Mathematical Model (Full-width with SVG schematic) -->
+        <article class="panel theory-card theory-wide">
+          <h3>4. Mathematical Model &amp; Assumptions</h3>
+          <div class="math-layout">
+            <div class="math-text">
+              <h4>Modeling Assumptions</h4>
+              <ul class="academic-list">
+                <li>Steady-state sinusoidal AC excitation at fixed frequency (the <em>j&omega;</em> factor cancels in capacitive KCL ratios).</li>
+                <li>All <em>n</em> insulator discs are identical with uniform self-capacitance <em>C</em>; surface leakage resistance and corona losses are neglected (dry, clean conditions).</li>
+                <li>All intermediate pins (nodes 1 to <em>n</em>&minus;1) share uniform shunt capacitance <em>C</em><sub>1</sub> = <em>K &middot; C</em> to the grounded tower; stray capacitance directly to the HV conductor is neglected.</li>
+                <li>Boundary conditions: Top tower clamp is solidly grounded (<em>V</em><sub>0</sub> = 0 kV) and bottom clamp is energized at phase voltage (<em>V</em><sub>n</sub> = <em>V</em>).</li>
+              </ul>
+
+              <h4>Nodal Analysis Equations</h4>
+              <div class="formula-box">
+                <p>Applying KCL at any intermediate junction node <em>i</em> &isin; {1, 2, &hellip;, <em>n</em>&minus;1}:</p>
+                <code>C(V<sub>i</sub> &minus; V<sub>i&minus;1</sub>) + C(V<sub>i</sub> &minus; V<sub>i+1</sub>) + C<sub>1</sub>(V<sub>i</sub> &minus; 0) = 0</code>
+                <p>Dividing by <em>C</em> and substituting <em>K</em> = <em>C</em><sub>1</sub>/<em>C</em> yields the tridiagonal recurrence:</p>
+                <code>&minus;V<sub>i&minus;1</sub> + (2 + K)V<sub>i</sub> &minus; V<sub>i+1</sub> = 0</code>
+                <p>Individual disc voltages and string efficiency are then computed directly from adjacent node potentials:</p>
+                <code>v<sub>i</sub> = V<sub>i</sub> &minus; V<sub>i&minus;1</sub>, &nbsp;&nbsp; &Sigma;v<sub>i</sub> = V<sub>n</sub> &minus; V<sub>0</sub> = V, &nbsp;&nbsp; &eta; = [V / (n &middot; v<sub>n</sub>)] &times; 100%</code>
+              </div>
+            </div>
+
+            <!-- Inline SVG Lumped Capacitance Circuit Diagram -->
+            <figure class="circuit-diagram">
+              <svg viewBox="0 0 380 340" role="img" aria-label="Lumped capacitance equivalent circuit diagram of suspension insulator string">
+                <defs>
+                  <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                    <path d="M0,0 L6,3 L0,6 Z" fill="#0f766e" />
+                  </marker>
+                </defs>
+                <!-- Grounded Tower Vertical Bus -->
+                <line x1="60" y1="24" x2="60" y2="290" stroke="#334155" stroke-width="3" />
+                <text x="20" y="18" font-size="11" font-weight="700" fill="#1e293b">Tower (Ground V&#x2080; = 0)</text>
+                <!-- Ground symbol -->
+                <line x1="48" y1="290" x2="72" y2="290" stroke="#334155" stroke-width="2.5" />
+                <line x1="52" y1="296" x2="68" y2="296" stroke="#334155" stroke-width="2" />
+                <line x1="56" y1="302" x2="64" y2="302" stroke="#334155" stroke-width="1.5" />
+
+                <!-- Top connection from Tower to Node 0 -->
+                <line x1="60" y1="40" x2="240" y2="40" stroke="#334155" stroke-width="2.5" />
+                <circle cx="240" cy="40" r="4.5" fill="#0f172a" />
+                <text x="252" y="44" font-size="11" font-weight="600" fill="#0f172a">Node 0 (V&#x2080; = 0)</text>
+
+                <!-- Disc 1 Capacitor C -->
+                <line x1="240" y1="40" x2="240" y2="70" stroke="#1d4ed8" stroke-width="2" />
+                <line x1="224" y1="70" x2="256" y2="70" stroke="#1d4ed8" stroke-width="2.5" />
+                <line x1="224" y1="79" x2="256" y2="79" stroke="#1d4ed8" stroke-width="2.5" />
+                <line x1="240" y1="79" x2="240" y2="110" stroke="#1d4ed8" stroke-width="2" />
+                <text x="264" y="78" font-size="11" fill="#1e3a8a">C (Disc 1: v&#x2081;)</text>
+
+                <!-- Node 1 & Shunt C1 -->
+                <circle cx="240" cy="110" r="4.5" fill="#0f172a" />
+                <text x="252" y="114" font-size="11" font-weight="600" fill="#0f172a">Node 1 (V&#x2081;)</text>
+                <line x1="60" y1="110" x2="135" y2="110" stroke="#0f766e" stroke-width="1.8" />
+                <line x1="135" y1="98" x2="135" y2="122" stroke="#0f766e" stroke-width="2.5" />
+                <line x1="144" y1="98" x2="144" y2="122" stroke="#0f766e" stroke-width="2.5" />
+                <line x1="144" y1="110" x2="240" y2="110" stroke="#0f766e" stroke-width="1.8" />
+                <text x="128" y="92" font-size="11" fill="#0f766e">C&#x2081; = K&middot;C</text>
+
+                <!-- Disc 2 Capacitor C -->
+                <line x1="240" y1="110" x2="240" y2="140" stroke="#1d4ed8" stroke-width="2" />
+                <line x1="224" y1="140" x2="256" y2="140" stroke="#1d4ed8" stroke-width="2.5" />
+                <line x1="224" y1="149" x2="256" y2="149" stroke="#1d4ed8" stroke-width="2.5" />
+                <line x1="240" y1="149" x2="240" y2="180" stroke="#1d4ed8" stroke-width="2" />
+                <text x="264" y="148" font-size="11" fill="#1e3a8a">C (Disc 2: v&#x2082;)</text>
+
+                <!-- Node 2 & Shunt C1 -->
+                <circle cx="240" cy="180" r="4.5" fill="#0f172a" />
+                <text x="252" y="184" font-size="11" font-weight="600" fill="#0f172a">Node 2 (V&#x2082;)</text>
+                <line x1="60" y1="180" x2="135" y2="180" stroke="#0f766e" stroke-width="1.8" />
+                <line x1="135" y1="168" x2="135" y2="192" stroke="#0f766e" stroke-width="2.5" />
+                <line x1="144" y1="168" x2="144" y2="192" stroke="#0f766e" stroke-width="2.5" />
+                <line x1="144" y1="180" x2="240" y2="180" stroke="#0f766e" stroke-width="1.8" />
+                <text x="128" y="163" font-size="11" fill="#0f766e">C&#x2081; = K&middot;C</text>
+
+                <!-- Ellipsis for intermediate discs -->
+                <line x1="240" y1="180" x2="240" y2="200" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="3,3" />
+                <text x="234" y="217" font-size="16" font-weight="700" fill="#475569">&vellip;</text>
+                <line x1="240" y1="224" x2="240" y2="242" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="3,3" />
+
+                <!-- Node n-1 & Shunt C1 -->
+                <circle cx="240" cy="242" r="4.5" fill="#0f172a" />
+                <text x="252" y="246" font-size="11" font-weight="600" fill="#0f172a">Node n&minus;1 (V&#x2099;&#x208B;&#x2081;)</text>
+                <line x1="60" y1="242" x2="135" y2="242" stroke="#0f766e" stroke-width="1.8" />
+                <line x1="135" y1="230" x2="135" y2="254" stroke="#0f766e" stroke-width="2.5" />
+                <line x1="144" y1="230" x2="144" y2="254" stroke="#0f766e" stroke-width="2.5" />
+                <line x1="144" y1="242" x2="240" y2="242" stroke="#0f766e" stroke-width="1.8" />
+
+                <!-- Disc n Capacitor C -->
+                <line x1="240" y1="242" x2="240" y2="268" stroke="#dc2626" stroke-width="2" />
+                <line x1="224" y1="268" x2="256" y2="268" stroke="#dc2626" stroke-width="2.5" />
+                <line x1="224" y1="277" x2="256" y2="277" stroke="#dc2626" stroke-width="2.5" />
+                <line x1="240" y1="277" x2="240" y2="306" stroke="#dc2626" stroke-width="2" />
+                <text x="264" y="276" font-size="11" font-weight="600" fill="#b91c1c">C (Disc n: v&#x2099; max)</text>
+
+                <!-- HV Conductor Node n -->
+                <circle cx="240" cy="306" r="5" fill="#dc2626" />
+                <line x1="190" y1="306" x2="360" y2="306" stroke="#dc2626" stroke-width="3" />
+                <text x="248" y="324" font-size="11" font-weight="700" fill="#b91c1c">HV Conductor (V&#x2099; = V)</text>
+              </svg>
+              <figcaption>Figure 1: Lumped-capacitance equivalent ladder network of an <em>n</em>-disc suspension insulator string.</figcaption>
+            </figure>
+          </div>
+        </article>
+
+        <!-- 5. Applications -->
+        <article class="panel theory-card">
+          <h3>5. Engineering Applications</h3>
+          <ul class="academic-list">
+            <li><strong>HV/EHV Overhead Transmission Lines:</strong> Selecting adequate disc counts for 33 kV through 765 kV corridors to prevent flashover across the line-end disc.</li>
+            <li><strong>Grading &amp; Guard Rings:</strong> Demonstrates why metallic grading rings at the conductor end introduce compensating capacitance to the live line, equalizing stress and raising &eta;.</li>
+            <li><strong>Tower Cross-Arm Clearance Design:</strong> Increasing cross-arm length reduces stray capacitance <em>C</em><sub>1</sub> (lowering <em>K</em>) and directly improves string efficiency.</li>
+            <li><strong>Capacitance Grading:</strong> Selecting larger-capacitance units near the line end reduces local reactance 1/&omega;<em>C</em>, flattening the voltage gradient.</li>
+          </ul>
+        </article>
+
+        <!-- 6. Results & Discussion -->
+        <article class="panel theory-card">
+          <h3>6. Results &amp; Discussion</h3>
+          <p>
+            When <em>K</em> = 0 (zero shunt capacitance), no current leaks to the tower, so every disc carries identical current and voltage (<em>v</em><sub>i</sub> = <em>V/n</em>, yielding &eta; = 100%). As <em>K</em> increases, the voltage gradient becomes sharply skewed toward the conductor end.
+          </p>
+          <div id="dynamic-discussion-box" class="discussion-callout">
+            <!-- Populated dynamically with current simulation metrics -->
+          </div>
+          <p>
+            Adding more discs lowers absolute kV per disc, yet reduces string efficiency &eta; because a longer string creates more parallel shunt paths to ground. Thus, EHV lines pair longer strings with grading rings rather than relying on disc count alone.
+          </p>
+        </article>
+
+        <!-- 7. Conclusion -->
+        <article class="panel theory-card">
+          <h3>7. Conclusion</h3>
+          <p>
+            This simulation confirms that stray shunt capacitance (<em>C</em><sub>1</sub>) between insulator metal fittings and the grounded tower is the primary cause of uneven voltage grading across suspension insulator strings. Nodal KCL analysis reliably predicts both individual disc stress and overall string efficiency while preserving total string voltage (&Sigma;<em>v</em><sub>i</sub> = <em>V</em>).
+          </p>
+          <p>
+            Interactive 3D visualization paired with real-time distribution graphs makes clear why the bottom conductor-end disc governs dielectric puncture and flashover limits in practical power transmission design.
+          </p>
+        </article>
+
+        <!-- 8. References -->
+        <article class="panel theory-card">
+          <h3>8. References</h3>
+          <ol class="academic-list">
+            <li>C. L. Wadhwa, <em>Electrical Power Systems</em>, 7th ed., New Age International Publishers (Chapter: Overhead Line Insulators).</li>
+            <li>V. K. Mehta &amp; R. Mehta, <em>Principles of Power System</em>, S. Chand Publishing (String Efficiency &amp; Voltage Distribution).</li>
+            <li>J. Grainger &amp; W. Stevenson, <em>Power System Analysis</em>, McGraw-Hill Education.</li>
+            <li>IEEE Std 1572 / IEC 60383-1, <em>Insulators for Overhead Lines with a Nominal Voltage Above 1000 V</em> (General engineering standards context).</li>
+          </ol>
+        </article>
+      </div>
+    </section>
+
+    <!-- SECTION 4: AUTOMATED MATHEMATICAL VERIFICATION -->
+    <section id="tests-section" class="panel tests-section" aria-label="Automated Calculation Verification">
+      <div class="panel-header">
+        <div>
+          <h2>Mathematical Verification Suite</h2>
+          <p class="panel-sub">Automated checks verifying closed-form textbook cases, <em>K</em> = 0 uniformity, disc count scaling, and voltage conservation</p>
+        </div>
+        <button type="button" id="run-tests-btn" class="btn btn-sm btn-primary">Run Verification Tests</button>
+      </div>
+      <div id="test-summary-banner" class="test-summary-banner">Click &ldquo;Run Verification Tests&rdquo; to execute the mathematical test suite.</div>
+      <div id="test-results-list" class="test-results-list"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      B.Tech Mini Project &bull; Mapping Voltage Gradient Across a String of Suspension Insulators &bull; Educational Mathematical Simulation
+    </p>
+  </footer>
+
+  <script src="tests.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
